@@ -1,2 +1,3 @@
-# context-inference-chat-demo
-A chat-based demonstration of stepwise context inference in Japanese dialogue. This system interprets conversational context through explicit reasoning stages (stage1–5) and classifies context types without using statistical models or LLMs.
+本リポジトリは、日本語対話における文脈理解を統計的言語モデルに依存せず、明示的な推論段階（stage1〜5）として実装した疑似体験型チャットデモである。
+
+本デモは、既存の A（日常のすれ違い）、B（感情・含み）、C（判断委ね）各文脈タイプ実証を統合し、対話形式で体験可能にしたものである。
