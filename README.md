@@ -78,11 +78,6 @@
 
 ---
 
-## 使い方
-```bash
-pip install streamlit
-streamlit run streamlit_app.py
-
 想定される応用例
 	•	統計モデルを用いにくい小規模AI（家電、カーナビ等）
 	•	文脈ズレの少ない対話型システム
@@ -98,3 +93,9 @@ streamlit run streamlit_app.py
 	•	日本語対話に特化している
 	•	皮肉・嫌味などの高度な語用論表現は限定的である
 	•	統計的評価は今後の課題とする
+
+
+## 使い方
+```bash
+pip install streamlit
+streamlit run streamlit_app.py
