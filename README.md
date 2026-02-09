@@ -1,114 +1,83 @@
-import streamlit as st
+# 文脈推定チャットデモ（Context Inference Chat Demo）
+本リポジトリは、日本語対話における文脈理解を 統計的言語モデルや大規模言語モデル（LLM）に依存せず、明示的な推論段階（stage1〜5）によって扱う疑似体験型チャットデモである。
 
-# =========================
-# 設定
-# =========================
+日常会話において人間が無意識に行っている「文脈の補完」「意図の推定」「責任や判断主体の推論」を、論理設計として分解・実装し、その推論過程を可視化することを目的としている。
 
-DELEGATION_WORDS = ["任せ", "決めて", "どちらでも", "お好きに"]
-EMOTION_WORDS = ["別に", "まあ", "全然", "大丈夫"]
-IMPLICIT_WORDS = ["そう", "らしい", "みたい"]
+---
 
-# =========================
-# stage 推論
-# =========================
+## 研究の背景と目的
+日本語の対話では、発話内容そのものよりも前提・暗黙の期待・感情・判断の委ね方などが意味理解に大きく影響する。
 
-def stage1_basic_context(text):
-    return "発話内容は通常の叙述文として成立している"
+本研究では、以下を目的とする。
 
-def stage2_clarification_need(text):
-    if any(w in text for w in EMOTION_WORDS):
-        return "感情的含みを示す語彙が含まれているため、聞き返し余地あり"
-    return "明示的な聞き返しは不要"
+- 統計や学習に依存しない小規模な文脈推定設計の検証
+- 文脈ズレが生じる構造を論理的に分解すること
+- 推論結果だけでなく、推論過程そのものを提示すること
 
-def stage3_causality(text):
-    if "から" in text or "ので" in text:
-        return "因果関係を示す接続が含まれている"
-    return "明示的な因果関係は検出されない"
+本デモは、精度競争を目的とするものではなく、**「どのように文脈理解が成立するか」を説明可能な形で示す**  
+基礎的な実証である。
 
-def stage4_modifier(text):
-    if any(w in text for w in IMPLICIT_WORDS):
-        return "推測・含意を示す修飾表現が含まれている"
-    return "修飾構造は単純"
+---
 
-def stage5_case_relation(text):
-    if any(w in text for w in DELEGATION_WORDS):
-        return "判断主体が相手に委ねられている"
-    return "判断主体は話者側にある"
+## 文脈タイプの分類
+本研究では、文脈のズレを以下の3タイプに分類する。
 
-# =========================
-# 文脈タイプ分類
-# =========================
+- **A：日常のすれ違い型**  
+  前提や期待の共有不足によって生じる解釈のズレ
 
-def classify_context(text):
-    b_score = 0
-    c_score = 0
-    reasons = []
+- **B：感情・含み型**  
+  感情的含意、態度、含み表現によって意図が曖昧になる文脈
 
-    if any(w in text for w in EMOTION_WORDS):
-        b_score += 1
-        reasons.append("感情・含みを示す語彙が検出された")
+- **C：判断委ね型**  
+  判断や責任の所在が明示されず、相手や状況に委ねられる文脈
 
-    if any(w in text for w in IMPLICIT_WORDS):
-        b_score += 1
-        reasons.append("推測・含意表現が検出された")
+各分類の詳細定義および例文については  
+`docs/context_types.md` を参照されたい。
 
-    if any(w in text for w in DELEGATION_WORDS):
-        c_score += 2
-        reasons.append("判断委譲を示す語彙が検出された")
+---
 
-    if c_score >= 2:
-        return "C：判断委ね型", reasons
+## 推論段階（stage1〜5）
 
-    if b_score >= 2:
-        return "B：感情・含み型", reasons
+文脈理解は一括処理せず、以下の段階的推論として実装している。
 
-    return "A：日常的すれ違い型", reasons
+- **stage1：基本的な文脈推定**  
+  発話の表層構造と明示情報の把握
 
-# =========================
-# UI
-# =========================
+- **stage2：最小限の聞き返し**  
+  情報不足や曖昧性の検出
 
-st.title("文脈推論デモ（説明可能AI）")
+- **stage3：因果関係推定**  
+  発話が生じた背景や動機の推定
 
-st.markdown("""
-このデモでは、入力された日本語文を  
-段階的な文脈推論（stage1〜5）に基づいて解析し、  
-文脈タイプ（A・B・C）への**推論可能性**を評価します。
+- **stage4：修飾構造の理解**  
+  評価語・態度表現・緩和表現の解釈
 
-※ 統計モデル・LLMは使用していません。
-""")
+- **stage5：名詞間の格関係推定**  
+  行為主体・判断主体・責任の所在の確定
 
-user_input = st.text_input("発話文を入力してください")
+これらの段階を通じて、最終的な文脈タイプを分類する。
 
-if user_input:
-    st.subheader("推論ステージ")
+詳細な設計思想は `docs/stage_design.md` に記載している。
 
-    s1 = stage1_basic_context(user_input)
-    s2 = stage2_clarification_need(user_input)
-    s3 = stage3_causality(user_input)
-    s4 = stage4_modifier(user_input)
-    s5 = stage5_case_relation(user_input)
+---
 
-    st.write("stage1：", s1)
-    st.write("stage2：", s2)
-    st.write("stage3：", s3)
-    st.write("stage4：", s4)
-    st.write("stage5：", s5)
+## デモについて
 
-    context_type, reasons = classify_context(user_input)
+本デモは Streamlit を用いたチャット形式で実装されている。
 
-    st.markdown("---")
-    st.subheader("分類結果")
+ユーザーが任意の文を入力すると、
 
-    st.write(f"**文脈タイプ：{context_type}**")
+1. stage1〜5 に基づく推論
+2. 文脈タイプの分類
+3. 推論理由の提示
 
-    if reasons:
-        st.markdown("**推論根拠（語彙ベース）**")
-        for r in reasons:
-            st.write("・", r)
+が行われる。
 
-    st.caption(
-        "※ 本結果は入力文単体に基づく推論可能性を示すものです。"
-        "前後の文脈や関係性が与えられた場合、"
-        "他の文脈タイプとして解釈される可能性があります。"
-    )
+これにより、**「AIが何をどう考えてその解釈に至ったか」**を疑似体験的に確認できる。
+
+---
+
+## 使い方
+
+```bash
+pip install streamlitstreamlit run streamlit_app.py
