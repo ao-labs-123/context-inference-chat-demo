@@ -1,42 +1,44 @@
 import streamlit as st
 
 # =========================
-# 設定
+# 定義語彙（設計スコープ）
 # =========================
 
 DELEGATION_WORDS = ["任せ", "決めて", "どちらでも", "お好きに"]
 EMOTION_WORDS = ["別に", "まあ", "全然", "大丈夫"]
 IMPLICIT_WORDS = ["そう", "らしい", "みたい"]
 
+ALL_KEYWORDS = DELEGATION_WORDS + EMOTION_WORDS + IMPLICIT_WORDS
+
 # =========================
-# stage 推論
+# stage 推論（抽象・簡潔）
 # =========================
 
-def stage1_basic_context(text):
-    return "発話内容は通常の叙述文として成立している"
+def stage1(text):
+    return "発話は文として成立している"
 
-def stage2_clarification_need(text):
+def stage2(text):
     if any(w in text for w in EMOTION_WORDS):
-        return "感情的含みを示す語彙が含まれているため、聞き返し余地あり"
-    return "明示的な聞き返しは不要"
+        return "感情的含みを示す可能性あり"
+    return "聞き返しを要する要素は少ない"
 
-def stage3_causality(text):
+def stage3(text):
     if "から" in text or "ので" in text:
-        return "因果関係を示す接続が含まれている"
+        return "因果関係が示唆されている"
     return "明示的な因果関係は検出されない"
 
-def stage4_modifier(text):
+def stage4(text):
     if any(w in text for w in IMPLICIT_WORDS):
-        return "推測・含意を示す修飾表現が含まれている"
+        return "推測・含意を含む修飾がある"
     return "修飾構造は単純"
 
-def stage5_case_relation(text):
+def stage5(text):
     if any(w in text for w in DELEGATION_WORDS):
         return "判断主体が相手に委ねられている"
     return "判断主体は話者側にある"
 
 # =========================
-# 文脈タイプ分類
+# 分類ロジック
 # =========================
 
 def classify_context(text):
@@ -62,7 +64,14 @@ def classify_context(text):
     if b_score >= 2:
         return "B：感情・含み型", reasons
 
-    return "A：日常的すれ違い型", reasons
+    return "A：日常的発話型", reasons
+
+# =========================
+# 定義範囲判定
+# =========================
+
+def is_out_of_scope(text):
+    return not any(w in text for w in ALL_KEYWORDS)
 
 # =========================
 # UI
@@ -71,29 +80,24 @@ def classify_context(text):
 st.title("文脈推論デモ（説明可能AI）")
 
 st.markdown("""
-このデモでは、入力された日本語文を  
-段階的な文脈推論（stage1〜5）に基づいて解析し、  
-文脈タイプ（A・B・C）への**推論可能性**を評価します。
+本デモは、日本語対話における文脈解釈を  
+**統計モデルやLLMを用いず**、  
+段階的な論理推論によって扱う実証デモです。
 
-※ 統計モデル・LLMは使用していません。
+分類結果は「正解」ではなく、  
+**文脈タイプへの推論可能性**を示します。
 """)
 
 user_input = st.text_input("発話文を入力してください")
 
 if user_input:
-    st.subheader("推論ステージ")
+    st.subheader("推論ステージ（stage1〜5）")
 
-    s1 = stage1_basic_context(user_input)
-    s2 = stage2_clarification_need(user_input)
-    s3 = stage3_causality(user_input)
-    s4 = stage4_modifier(user_input)
-    s5 = stage5_case_relation(user_input)
-
-    st.write("stage1：", s1)
-    st.write("stage2：", s2)
-    st.write("stage3：", s3)
-    st.write("stage4：", s4)
-    st.write("stage5：", s5)
+    st.write("stage1：", stage1(user_input))
+    st.write("stage2：", stage2(user_input))
+    st.write("stage3：", stage3(user_input))
+    st.write("stage4：", stage4(user_input))
+    st.write("stage5：", stage5(user_input))
 
     context_type, reasons = classify_context(user_input)
 
@@ -107,21 +111,22 @@ if user_input:
         for r in reasons:
             st.write("・", r)
 
+    # ===== 補足説明 =====
+    if context_type.startswith("A"):
+        if is_out_of_scope(user_input):
+            st.markdown(
+                "**補足**：本発話では、本デモで定義している"
+                "文脈特徴語彙が検出されませんでした。"
+                "そのため、推論対象となる文脈タイプは顕在化していません。"
+            )
+        else:
+            st.markdown(
+                "**補足**：文脈的特徴が弱いため、"
+                "日常的な発話として解釈されています。"
+            )
+
     st.caption(
         "※ 本結果は入力文単体に基づく推論可能性を示すものです。"
         "前後の文脈や関係性が与えられた場合、"
         "他の文脈タイプとして解釈される可能性があります。"
     )
-
-    if context_type.startswith("A"):
-    if is_out_of_scope(user_input):
-        st.markdown(
-            "**補足**：本発話では、本デモで定義している"
-            "文脈特徴語彙が検出されませんでした。"
-            "そのため、推論対象の文脈タイプは顕在化していません。"
-        )
-    else:
-        st.markdown(
-            "**補足**：本発話では文脈的特徴が弱いため、"
-            "日常的な発話として解釈されています。"
-        )
