@@ -24,7 +24,7 @@ if "messages" not in st.session_state:
 IMPLICIT_WORDS = ["そう", "みたい", "らしい", "得意", "好きそう", "真面目"]
 SOFTENING_WORDS = ["まぁ", "別に", "一応", "特に"]
 EMOTION_WORDS = ["大変", "疲れ", "困る", "嫌"]
-DELEGATION_WORDS = ["任せる", "どちらでも", "お好きに", "決めていい"]
+DELEGATION_WORDS = ["任せ", "どちらでも", "お好きに", "決めて"]
 
 # =====================
 # stage定義
