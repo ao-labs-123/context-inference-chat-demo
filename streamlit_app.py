@@ -5,7 +5,7 @@ st.subheader("A：日常の行き違い解析")
 
 text = st.text_area("文章を入力")
 
-if st.button("解析"):
+if st.button("Aを解析"):
     result = detect_A(text)
 
     if result:
