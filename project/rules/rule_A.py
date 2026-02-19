@@ -1,42 +1,74 @@
+# rules_A.py
+
 from project.lexicon.lexicon_A import (
     REQUEST_WORDS,
     ACTION_WORDS,
     CONTRAST_WORDS,
+    POSITIVE_WORDS,
     TIME_WORDS,
     PERSPECTIVE_WORDS,
-    DEICTIC_WORDS
+    DEICTIC_WORDS,
 )
 
-def contains_any(text, word_list):
-    return any(word in text for word in word_list)
+def contains_with_triggers(text, word_list):
+    hits = [w for w in word_list if w in text]
+    return len(hits) > 0, hits
 
 
 def detect_A(text):
 
-    # A-1 実行報告型ズレ
-    if (
-        contains_any(text, REQUEST_WORDS)
-        and contains_any(text, ACTION_WORDS)
-        and contains_any(text, CONTRAST_WORDS)
-    ):
-        return "A-1"
+    result = {
+        "type": "A",
+        "axis": None,
+        "tags": [],
+        "state": None,
+        "triggers": []
+    }
 
-    # A-2 暗黙期待型
-    if (
-        contains_any(text, REQUEST_WORDS)
-        and contains_any(text, ACTION_WORDS)
-    ):
-        return "A-2"
+    # ===== request軸検出 =====
+    has_request, req_hits = contains_with_triggers(text, REQUEST_WORDS)
+    has_action, act_hits = contains_with_triggers(text, ACTION_WORDS)
 
-    # A-3 参照ズレ
-    if contains_any(text, DEICTIC_WORDS):
-        return "A-3"
+    if has_request and has_action:
+        result["axis"] = "request"
+        result["triggers"] += req_hits + act_hits
 
-    # A-4 時間・視点ズレ
-    if (
-        contains_any(text, TIME_WORDS)
-        or contains_any(text, PERSPECTIVE_WORDS)
-    ):
-        return "A-4"
+        # タグ判定
+        has_time, time_hits = contains_with_triggers(text, TIME_WORDS)
+        has_persp, persp_hits = contains_with_triggers(text, PERSPECTIVE_WORDS)
+
+        if has_time:
+            result["tags"].append("time")
+            result["triggers"] += time_hits
+
+        if has_persp:
+            result["tags"].append("perspective")
+            result["triggers"] += persp_hits
+
+        if not result["tags"]:
+            result["tags"].append("implicit")
+
+        # 解消判定
+        has_contrast, contrast_hits = contains_with_triggers(text, CONTRAST_WORDS)
+        has_positive, positive_hits = contains_with_triggers(text, POSITIVE_WORDS)
+
+        result["triggers"] += contrast_hits + positive_hits
+
+        if has_contrast and has_positive:
+            result["state"] = "resolved"
+        else:
+            result["state"] = "unresolved"
+
+        return result
+
+    # ===== reference軸検出 =====
+    has_deictic, deictic_hits = contains_with_triggers(text, DEICTIC_WORDS)
+
+    if has_deictic:
+        result["axis"] = "reference"
+        result["tags"].append("deictic")
+        result["state"] = "unresolved"
+        result["triggers"] += deictic_hits
+        return result
 
     return None
