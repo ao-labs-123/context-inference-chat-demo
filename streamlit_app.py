@@ -69,3 +69,50 @@ if st.button("Bを解析"):
 
     else:
         st.info("B構造は検出されませんでした。")
+
+        import streamlit as st
+from project.rules.rules_C import detect_C
+
+st.subheader("C：判断委ね構造解析")
+
+text_c = st.text_area("文章を入力（C解析）", key="c_input")
+
+if st.button("Cを解析"):
+    result = detect_C(text_c)
+
+    if result:
+
+        st.markdown("## 🅲 判定結果")
+
+        st.markdown(f"**subtype**：{result['subtype']}")
+        st.markdown(f"**delegation_direction**：{result['delegation_direction']}")
+        st.markdown(f"**trigger_words**：{', '.join(result['trigger_words'])}")
+        st.markdown(f"**confidence**：{result['confidence']}")
+
+        st.divider()
+
+        # 🔎 構造レイヤー表示
+        st.markdown("### 構造レイヤー")
+
+        st.markdown(f"""
+        C（判断委ね）
+        └─ subtype: {result['subtype']}
+            └─ delegation: {result['delegation_direction']}
+                └─ trigger: {', '.join(result['trigger_words'])}
+        """)
+
+        # 🔵 サブタイプ説明表示（エビデンス補助）
+        st.divider()
+        st.markdown("### subtype解説")
+
+        explanations = {
+            "position": "主導権を相手に委ねる構造",
+            "implicit": "社会的規範・暗黙基準への依存",
+            "responsibility": "条件付きで行動責任を相手に移動",
+            "consideration": "配慮・丁寧条件による判断委譲"
+        }
+
+        st.info(explanations.get(result["subtype"], ""))
+
+    else:
+        st.info("C構造は検出されませんでした。")
