@@ -5,7 +5,7 @@ from project.lexicon.lexicon_A import (
     ACTION_WORDS,
     CONTRAST_WORDS,
     POSITIVE_WORDS,
-    TIME_WORDS,
+    TIME_REFERENCE,
     PERSPECTIVE_WORDS,
     DEICTIC_WORDS,
 )
@@ -34,7 +34,7 @@ def detect_A(text):
         result["triggers"] += req_hits + act_hits
 
         # タグ判定
-        has_time, time_hits = contains_with_triggers(text, TIME_WORDS)
+        has_time, time_hits = contains_with_triggers(text, TIME_REFERENCE)
         has_persp, persp_hits = contains_with_triggers(text, PERSPECTIVE_WORDS)
 
         if has_time:
